@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -17,9 +18,14 @@ import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.AccountPicker;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class MainActivity extends Activity {
+  private static final String TAG = "Monkey-Whore";
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -32,15 +38,36 @@ public class MainActivity extends Activity {
   private void checkIntent(Intent intent) {
     String action = intent.getAction();
     String type   = intent.getType();
-
+    Log.i(TAG, "Action: " + action + ", Type: " + type);
     if(Intent.ACTION_SEND.equals(action) && type != null) {
       if("text/plain".equals(type)) {
+
         String text = intent.getStringExtra(Intent.EXTRA_TEXT);
+        Log.i(TAG, "text: " + text);
         if(text != null) {
-          String url = extractURL(text);
+          String[] links = extractLinks(text);
+          if(links.length > 0) {
+            Log.i(TAG, "Url detected, " + links[0]);
+            ((TextView)findViewById(R.id.status)).setText(links[0]);
+          } else {
+            Log.i(TAG, "No, Url Detected..");
+          }
         }
       }
     }
+  }
+
+  public static String[] extractLinks(String text) {
+    Log.i(TAG, text);
+    List<String> links = new ArrayList<String>();
+    Matcher m = Patterns.WEB_URL.matcher(text);
+    while (m.find()) {
+      String url = m.group();
+      Log.d(TAG, "URL extracted: " + url);
+      links.add(url);
+    }
+
+    return links.toArray(new String[links.size()]);
   }
 
   private String extractURL(String text) {
@@ -56,7 +83,6 @@ public class MainActivity extends Activity {
     startActivityForResult(intent, REQUEST_CODE_PICK_ACCOUNT);
   }
 
-  private static final String TAG = "RetrieveAccessToken";
   private static final int REQ_SIGN_IN_REQUIRED = 55664;
   String mEmail; // Received from newChooseAccountIntent(); passed to getToken()
 
