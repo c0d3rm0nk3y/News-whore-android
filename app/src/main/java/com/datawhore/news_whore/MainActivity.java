@@ -25,6 +25,26 @@ public class MainActivity extends Activity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
+
+    checkIntent(getIntent());
+  }
+
+  private void checkIntent(Intent intent) {
+    String action = intent.getAction();
+    String type   = intent.getType();
+
+    if(Intent.ACTION_SEND.equals(action) && type != null) {
+      if("text/plain".equals(type)) {
+        String text = intent.getStringExtra(Intent.EXTRA_TEXT);
+        if(text != null) {
+          String url = extractURL(text);
+        }
+      }
+    }
+  }
+
+  private String extractURL(String text) {
+    return null;
   }
 
   static final int REQUEST_CODE_PICK_ACCOUNT = 1000;
@@ -36,6 +56,8 @@ public class MainActivity extends Activity {
     startActivityForResult(intent, REQUEST_CODE_PICK_ACCOUNT);
   }
 
+  private static final String TAG = "RetrieveAccessToken";
+  private static final int REQ_SIGN_IN_REQUIRED = 55664;
   String mEmail; // Received from newChooseAccountIntent(); passed to getToken()
 
   @Override
@@ -60,8 +82,6 @@ public class MainActivity extends Activity {
     new RetrieveTokenTask().execute(mEmail);
   }
 
-  private static final String TAG = "RetrieveAccessToken";
-  private static final int REQ_SIGN_IN_REQUIRED = 55664;
 
   private class RetrieveTokenTask extends AsyncTask<String, Void, String> {
     @Override
