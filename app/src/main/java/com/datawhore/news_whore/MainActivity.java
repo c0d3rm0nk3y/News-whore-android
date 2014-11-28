@@ -2,13 +2,17 @@ package com.datawhore.news_whore;
 
 import android.accounts.AccountManager;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.Preference;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,15 +21,21 @@ import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.common.AccountPicker;
 
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
 public class MainActivity extends Activity {
   private static final String TAG = "Monkey-Whore";
+  private static final String PREF_NAME = "Pref";
+  private static final int REQ_SIGN_IN_REQUIRED = 55664;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -35,20 +45,25 @@ public class MainActivity extends Activity {
     checkIntent(getIntent());
   }
 
+
+  // process incoming Text for URLs
   private void checkIntent(Intent intent) {
     String action = intent.getAction();
     String type   = intent.getType();
     Log.i(TAG, "Action: " + action + ", Type: " + type);
     if(Intent.ACTION_SEND.equals(action) && type != null) {
       if("text/plain".equals(type)) {
-
+        Toast.makeText(getBaseContext(), "Incoming text: " + intent.getStringExtra(Intent.EXTRA_TEXT), Toast.LENGTH_LONG).show();
         String text = intent.getStringExtra(Intent.EXTRA_TEXT);
+
         Log.i(TAG, "text: " + text);
         if(text != null) {
           String[] links = extractLinks(text);
           if(links.length > 0) {
             Log.i(TAG, "Url detected, " + links[0]);
-            ((TextView)findViewById(R.id.status)).setText(links[0]);
+
+            Toast.makeText(getBaseContext(), "Url detected: " + links[0], Toast.LENGTH_SHORT).show();
+
           } else {
             Log.i(TAG, "No, Url Detected..");
           }
@@ -70,21 +85,35 @@ public class MainActivity extends Activity {
     return links.toArray(new String[links.size()]);
   }
 
-  private String extractURL(String text) {
-    return null;
-  }
 
+  // get the acct no (if not already chosen), and get updated refresh token
   static final int REQUEST_CODE_PICK_ACCOUNT = 1000;
 
   private void pickUserAccount() {
+    iniPref();
     String[] accountTypes = new String[]{"com.google"};
     Intent intent = AccountPicker.newChooseAccountIntent(null, null,
         accountTypes, false, null, null, null, null);
     startActivityForResult(intent, REQUEST_CODE_PICK_ACCOUNT);
   }
 
-  private static final int REQ_SIGN_IN_REQUIRED = 55664;
+  private void iniPref() {
+    try {
+      SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+      SharedPreferences.Editor editor = sharedPref.edit();
+      //getResources().getString()
+    }catch(Exception e) {
+
+    }
+  }
+
+
+
   String mEmail; // Received from newChooseAccountIntent(); passed to getToken()
+
+  private void getUsername() {
+    new RetrieveTokenTask().execute(mEmail);
+  }
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -103,11 +132,6 @@ public class MainActivity extends Activity {
     }
     // Later, more code will go here to handle the result from some exceptions...
   }
-
-  private void getUsername() {
-    new RetrieveTokenTask().execute(mEmail);
-  }
-
 
   private class RetrieveTokenTask extends AsyncTask<String, Void, String> {
     @Override
@@ -130,9 +154,20 @@ public class MainActivity extends Activity {
     @Override
     protected void onPostExecute(String s) {
       super.onPostExecute(s);
-      ((TextView)findViewById(R.id.status)).setText(s);
+      Toast.makeText(getBaseContext(), s, Toast.LENGTH_LONG).show();
+      //((TextView)findViewById(R.id.status)).setText(s);
+
+      HttpClient client = new DefaultHttpClient();
+      // 10.0.0.211
+      // http://androidexample.com/How_To_Make_HTTP_Get_Request_To_Server_-_Android_Example/index.php?view=article_discription&aid=63&aaid=88
+      String sUri = "http://10.0.211/";
     }
   }
+
+
+  /*
+  * Next steps.. sharedPreferences.. save Acct No.
+  * */
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
