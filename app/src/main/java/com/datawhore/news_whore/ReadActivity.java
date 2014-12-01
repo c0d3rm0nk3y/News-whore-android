@@ -1,17 +1,38 @@
 package com.datawhore.news_whore;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
 
-public class ReadActivity extends Activity {
+public class ReadActivity extends Activity implements WebServiceListener {
+  private NewsWhoreAPI nWhore = null;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_read);
+
+    // check if start or restart
+    if(savedInstanceState != null) {
+      // restart
+    } else {
+      // first run
+      checkIntentForShare(getIntent());
+    }
+  }
+
+  private void checkIntentForShare(Intent intent) {
+    String action = intent.getAction();
+    String type   = intent.getType();
+
+    if(Intent.ACTION_SEND.equals(action) && type != null) {
+      if("text/plain".equals(type)) {
+        // sharing
+      }
+    }
   }
 
 
@@ -35,5 +56,15 @@ public class ReadActivity extends Activity {
     }
 
     return super.onOptionsItemSelected(item);
+  }
+
+  @Override
+  public void onFileDownloadComplete(String content) {
+
+  }
+
+  @Override
+  public void onTokenDownloadComplete(String token) {
+
   }
 }
