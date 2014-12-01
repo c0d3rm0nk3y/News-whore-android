@@ -44,10 +44,25 @@ public class WebDownloadClient extends AsyncTask<String, Void, String> {
   protected String doInBackground(String... params) {
     Log.i(TAG, "WebDownloadClient.AsyncTask.doInBackground()..");
     // pick account
+    String result = "";
     String link = params[0];
     String email = params[1];
     String token = params[2];
     //String token = getToken(email);
+    result = googleAuth(link, token);
+
+    return result;
+  }
+
+  String withUsernamePassword(String link, String username, String password) {
+    String result = "";
+
+
+
+    return result;
+  }
+
+  String googleAuth(String link, String token) {
     String sUri = "http://monkey-nodejs-71725.usw1.nitrousbox.com:8080/submitArticle/?link=" + link + "&token=" + token;
     String url = null;
     try {
@@ -58,7 +73,6 @@ public class WebDownloadClient extends AsyncTask<String, Void, String> {
     }
 
     String result = getFromWeb(sUri);
-
     return result;
   }
 
