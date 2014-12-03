@@ -45,35 +45,27 @@ public class MainActivity extends Activity implements WebServiceListener {
   private WebDownloadClient wdc = new WebDownloadClient(this);
   private SharedPreferences sharedPref = null;
   private SharedPreferences.Editor editor = null;
+  NewsWhoreAPI nwa;
+  String mEmail;
+  String mLink;
+  String mToken;
+  String title = null;
+  String text = null;
 
-  @Override
-  protected void onStart() {
-    super.onStart();
-    Log.i(TAG, "onStart()\ntitle: " + this.title + "\ntext: " + this.text);
-  }
 
   @Override
   protected void onSaveInstanceState(Bundle outState) {
-    outState.putString("title", title);
-    outState.putString("text", text);
-    Log.i(TAG, "onSaveInstanceState()\ntitle: " + this.title + "\ntext: " + this.text);
-    // you go last..
+//    outState.putString("title", title);
+//    outState.putString("text", text);
     super.onSaveInstanceState(outState);
-  }
-
-  @Override
-  public void onConfigurationChanged(Configuration newConfig) {
-    super.onConfigurationChanged(newConfig);
-
-    Log.i(TAG, "onConfigurationChanged()..\ntitle: " + this.title + "\ntext: " + this.text + "\n\n");
   }
 
   @Override
   protected void onRestoreInstanceState(Bundle savedInstanceState) {
     super.onRestoreInstanceState(savedInstanceState);
 
-    this.title = savedInstanceState.getString("title");
-    this.text = savedInstanceState.getString("text");
+//    this.title = savedInstanceState.getString("title");
+//    this.text = savedInstanceState.getString("text");
 
     Log.i(TAG, "onRestoreInstanceState()..\ntitle: " + this.title + "\ntext: " + this.text);
   }
@@ -87,91 +79,26 @@ public class MainActivity extends Activity implements WebServiceListener {
     if(savedInstanceState != null) {
       // restoring from prev instance
       Log.i(TAG, "alright, we have been through this, don't get token or any of that crap..");
-      Log.i(TAG, "onCreate()..\ntitle: " + this.title + "\ntext: " + this.text);
+
     } else {
       // first run!
       Log.i(TAG, "first run!!  lets get that token..");
-      checkIntent(getIntent());
-    }
 
-
-  }
-
-  // process incoming Text for URLs
-  private void checkIntent(Intent intent) {
-    String action = intent.getAction();
-    String type   = intent.getType();
-    Log.i(TAG, "Action: " + action + ", Type: " + type);
-    if(Intent.ACTION_SEND.equals(action) && type != null) {
-      if("text/plain".equals(type)) {
-        Toast.makeText(getBaseContext(), "Incoming text: " + intent.getStringExtra(Intent.EXTRA_TEXT), Toast.LENGTH_LONG).show();
-        String text = intent.getStringExtra(Intent.EXTRA_TEXT);
-
-        Log.i(TAG, "text: " + text);
-        if(text != null) {
-          String[] links = extractLinks(text);
-          if(links.length > 0) {
-            Log.i(TAG, "Url detected, " + links[0]);
-
-            Toast.makeText(getBaseContext(), "Url detected: " + links[0], Toast.LENGTH_SHORT).show();
-            this.mLink = links[0];
-            if(mEmail == null) { pickUserAccount(); }
-            getUsername();
-          } else {
-            Log.i(TAG, "No, Url Detected..");
-          }
-        }
-      }
-    }
-  }
-
-  public static String[] extractLinks(String text) {
-    Log.i(TAG, text);
-    List<String> links = new ArrayList<String>();
-    Matcher m = Patterns.WEB_URL.matcher(text);
-    while (m.find()) {
-      String url = m.group();
-      Log.d(TAG, "URL extracted: " + url);
-      links.add(url);
-    }
-
-    return links.toArray(new String[links.size()]);
-  }
-
-  // get the acct no (if not already chosen), and get updated refresh token
-
-  private void pickUserAccount() {
-    if(sharedPref.contains("acct") && !sharedPref.getString("acct",null).equals(null)) {
-      mEmail = sharedPref.getString("acct",null);
-
-    } else {
-      String[] accountTypes = new String[]{"com.google"};
-      Intent intent = AccountPicker.newChooseAccountIntent(null, null,
-          accountTypes, false, null, null, null, null);
-      startActivityForResult(intent, REQUEST_CODE_PICK_ACCOUNT);
+      // here is where you would GET /api/articles from nWhoreAPI and populate a main list..
     }
   }
 
   private void iniPref() {
     try {
-
-      sharedPref = getPreferences(Context.MODE_PRIVATE);
-      editor = sharedPref.edit();
-      mEmail = sharedPref.getString("acct", null);
-      ((TextView)findViewById(R.id.status)).setText(mEmail);
-      Toast.makeText(getBaseContext(),"email from pref is: " + mEmail, Toast.LENGTH_LONG).show();
-      Log.i(TAG, "Email in pref is: " + mEmail);
+//      sharedPref = getPreferences(Context.MODE_PRIVATE);
+//      editor = sharedPref.edit();
+//      mEmail = sharedPref.getString("acct", null);
+//      ((TextView)findViewById(R.id.status)).setText(mEmail);
+//      //Toast.makeText(getBaseContext(),"email from pref is: " + mEmail, Toast.LENGTH_SHORT).show();
+//      Log.i(TAG, "Email in pref is: " + mEmail);
     }catch(Exception e) {
-
+      e.printStackTrace();
     }
-  }
-
-  String mEmail; // Received from newChooseAccountIntent(); pgoogleassed to getToken()
-  String mLink;
-  String mToken;
-
-  private void getUsername() {
-    new RetrieveTokenTask(this).execute(mEmail);
   }
 
   @Override
@@ -195,20 +122,19 @@ public class MainActivity extends Activity implements WebServiceListener {
     // Later, more code will go here to handle the result from some exceptions...
   }
 
-  String title = null;
-  String text = null;
-
   @Override
   public void onFileDownloadComplete(String result) {
     // here is where the server response should be..
     Log.i(TAG, "file download result: " + result);
+    ((TextView)findViewById(R.id.content)).setText(result);
+
     try {
       JSONObject reader = new JSONObject(result);
-      // title content text
-      this.title = reader.getString("title");
-      this.text = reader.getString("text");
-      ((TextView)findViewById(R.id.status)).setText(title);
-      ((TextView)findViewById(R.id.content)).setText(text);
+//      // title content text
+//      this.title = reader.getString("title");
+//      this.text = reader.getString("text");
+//      ((TextView)findViewById(R.id.status)).setText(title);
+
     } catch(JSONException e) { e.printStackTrace(); }
   }
 
@@ -217,6 +143,35 @@ public class MainActivity extends Activity implements WebServiceListener {
     Log.i(TAG, "token obtained: " + token);
     this.mToken = token;
     this.wdc.execute(mLink, mEmail, mToken);
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    this.nwa = new NewsWhoreAPI(this);
+    nwa.execute("GET");
+  }
+
+  @Override
+  protected void onStart() {
+    super.onStart();
+
+  }
+
+  private void pickUserAccount() {
+    if(sharedPref.contains("acct") && !sharedPref.getString("acct",null).equals(null)) {
+      mEmail = sharedPref.getString("acct",null);
+
+    } else {
+      String[] accountTypes = new String[]{"com.google"};
+      Intent intent = AccountPicker.newChooseAccountIntent(null, null,
+          accountTypes, false, null, null, null, null);
+      startActivityForResult(intent, REQUEST_CODE_PICK_ACCOUNT);
+    }
+  }
+
+  private void getUsername() {
+    new RetrieveTokenTask(this).execute(mEmail);
   }
 
   private class RetrieveTokenTask extends AsyncTask<String, Void, String> {
@@ -243,16 +198,11 @@ public class MainActivity extends Activity implements WebServiceListener {
     @Override
     protected void onPostExecute(String s) {
       super.onPostExecute(s);
-      Toast.makeText(getBaseContext(), s, Toast.LENGTH_LONG).show();
+      Toast.makeText(getBaseContext(), s, Toast.LENGTH_SHORT).show();
       //((TextView)findViewById(R.id.status)).setText(s);
       listener.onTokenDownloadComplete(s);
-
     }
   }
-
-  /*
-  * Next steps.. sharedPreferences.. save Acct No.
-  * */
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
